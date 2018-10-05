@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>editor</title>
+  <style> body{margin:0} canvas{width:100%;height:100%}</style>  
+  <!-- jquery v3.3.1 -->
+  <script src="http://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+  <!-- bootstrap v4.0 & fontawsome v4.7 -->
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  <!-- three.js v0.85 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/85/three.min.js"></script>
+
+  <link href="./css/editor.css" rel="stylesheet"/>
+  <script src="../src/opengalleon/log.js"></script>
+  <script src="../src/opengalleon/action.js"></script>
+  <script src="../src/opengalleon/actionsequence.js"></script>
+  <script src="../src/opengalleon/ability.js"></script>
+  <script src="../src/opengalleon/specialmove.js"></script>
+  <script src="../src/opengalleon/skill.js"></script>
+  <script src="../src/opengalleon/card.js"></script>
+  <script src="../src/opengalleon/filters.js"></script>
+  <script src="../src/opengalleon/fieldcellstatus.js"></script>
+  <script src="../src/opengalleon/fieldcellreaction.js"></script>
+  <script src="../src/opengalleon/fieldcell.js"></script>
+  <script src="../src/opengalleon/field.js"></script>
+  <script src="../src/opengalleon/cardtype.js"></script>
+  <script src="../src/opengalleon/description.js"></script>
+  <script src="../src/opengalleon/rule.js"></script>
+
+  <script src="../src/opengalleon/logexecutor.js"></script>
+
+  <script src="./common/actioninput.js"></script>
+  <script src="./common/actionsequencecard.js"></script>
+  <script src="./common/ruleeditor.js"></script>
+  <script src="./common/cardeditor.js"></script>
+  <script src="./common/deckeditor.js"></script>
+  <script src="./common/testfield.js"></script>
+  <script src="./common/dashboard.js"></script>
+  <script src="./common/navmenu.js"></script>
+  <script src="./common/confirmation.js"></script>
+  <script src="./common/model.js"></script>
+  <script src="./common/view.js"></script>
+
+  <script src="./common/_cardinfo.js"></script>
+  
+  <script>
+var model, view;
+
+$(()=>{
+  model = new Model();
+  view = new View();
+
+  model.fromHash(hash);
+  view.setRule(model.rule);
+});
+  </script>
+</head>
+<body>
+  <div class="container-fluid">
+<!-- Header -->
+    <header class="navbar sticky-top navbar-expand-md navbar-dark bg-secondary mb-3" id="header">
+      <a class="navbar-brand nav-link" tab-id="dash-board" href="#">Open Galleon Rule Editor <small>v0.0.1</small></a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+        <div class="navbar-nav">
+          <a class="nav-item nav-link active" tab-id="dash-board" href="#">ダッシュボード</a>
+          <a class="nav-item nav-link" tab-id="rule-editor" href="#">ルール</a>
+          <a class="nav-item nav-link" tab-id="card-editor" href="#">カード</a>
+          <a class="nav-item nav-link" tab-id="deck-editor" href="#">デッキ</a>
+        </div>
+        <div class="navbar-nav ml-auto">
+          <a class="nav-item nav-link btn btn-sm btn-light text-dark ml-auto" tab-id="test-field" href="#">テストバトル</a>
+        </div>
+      </div>
+    </header>
+<!-- Dash Board -->
+    <div class="row nav-target" id="dash-board">
+      <div class="col-12">
+        <h1>Open Galleon Rule Editor v0.0.1</h1>
+        <label>
+          <span class="btn btn-danger">Import from rulebook.json<input type="file" style="display:none" id="import"></span>
+        </label>
+        <button tppe="button" class="btn btn-primary" id="export">Export as rulebook.json</button>
+      </div>
+    </div>
+<!-- Rule Editor -->
+    <div class="row nav-target" id="rule-editor">
+      <div class="col-xl-2 col-lg-3" id="sidebar">
+        <div class="nav nav-pills flex-column">
+          <a href="#" class="nav-link active" targetid="general-pane" id="general">全般</a>
+          <a href="#" class="nav-link" targetid="ability-pane" id="ability">能力</a>
+          <a href="#" class="nav-link" targetid="special-pane" id="special">必殺技</a>
+          <a href="#" class="nav-link" targetid="deckeffect-pane" id="deckeffect">デッキ効果</a>
+        </div>
+      </div>
+      <div class="col" id="main">
+      <!-- Geneal Panel -->
+        <div class="row" id="general-pane">
+          <div class="col-12 mb-3">
+            <div class="card">
+              <div class="card-caption">全般</div>
+              <div class="card-body">
+                <div class="row">
+                  <label class="col-2" for="param-rule-maxTurns">最大ターン数</label>
+                  <input class="col-2 form-control" id="param-rule-maxTurns" key="maxTurns" value="20"/>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 mb-3" listkey="types">
+            <div class="card">
+              <div class="card-caption">属性</div>
+              <div class="card-body">
+              </div>
+            </div>
+          </div>
+          <div class="col-12 mb-3" listkey="subtypes">
+            <div class="card">
+              <div class="card-caption">サブ属性</div>
+              <div class="card-body">
+              </div>
+            </div>
+          </div>
+          <div class="col-12 mb-3" listkey="rarities">
+            <div class="card">
+              <div class="card-caption">レアリティ</div>
+              <div class="card-body">
+              </div>
+            </div>
+          </div>
+          <div class="col-12 mb-3" listkey="packages">
+            <div class="card">
+              <div class="card-caption">パッケージ</div>
+              <div class="card-body">
+              </div>
+            </div>
+          </div>
+          <div class="modal fade" id="cardtype-input" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">カード属性入力</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                  <div class="container-fluid">
+                    <div class="row">
+                      <label class="col-2" for="param-cardtype-name">名前（簡略）</label>
+                      <input class="col-2 form-control mb-3" id="param-cardtype-name" key="name" value=""/>
+                      <label class="col-2" for="param-cardtype-description">名前（詳細）</label>
+                      <input class="col-6 form-control mb-3" id="param-cardtype-description" key="description" value=""/>
+                      <div class="col-12" id="field-primary">
+                        <div class="row">
+                          <label class="col-2" for="param-cardtype-isCountable">Countable</label>
+                          <select class="col-2 form-control mb-3" id="param-cardtype-isCountable" key="isCountable" value="false"/>
+                            <option value="false">false</option>
+                            <option value="true">true</option>
+                          </select>
+                          <label class="col-2" for="param-cardtype-attackRate">攻撃値補正</label>
+                          <input class="col-6 form-control mb-3" id="param-cardtype-attackRate" value=""/>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-danger mr-auto" id="delete">削除</button>
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+                  <button type="button" class="btn btn-primary" id="submit">更新</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <!-- Ability Panel -->
+        <div class="row" id="ability-pane">
+          <div class="col-12 mb-3">
+            <button type="button" class="col-12 btn btn-primary append">＋新規能力</button>
+          </div>
+        </div>
+      <!-- Special move Panel -->
+        <div class="row" id="special-pane">
+          <div class="col-12 mb-3">
+            <button type="button" class="col-12 btn btn-primary append">＋新規必殺技</button>
+          </div>
+        </div>
+      <!-- Deck effect Panel -->
+        <div class="row" id="deckeffect-pane">
+          <div class="col-12 mb-3">
+            <button type="button" class="col-12 btn btn-primary append">＋新規デッキ効果</button>
+          </div>
+        </div>
+      </div>
+    </div>
+<!-- Card Editor -->
+    <div class="row nav-target" id="card-editor">
+      <div class="col-lg-3" id="sidebar">
+        <ul class="nav nav-pills flex-column" id="cardlist">
+          <li class="nav-item">
+            <a class="nav-link" href="#"></a>
+          </li>
+        </ul>
+      </div>
+      <div class="col" id="main">
+        <div class="row" id="parameters">
+          <label class="col-1" for="param-id">id</label>
+          <input class="col-2 form-control mb-3" id="param-id"/>
+          <div class="col-9">
+            <div class="row">
+              <button class="col-2 ml-2 btn btn-primary" id="card-update">更新</button>
+              <button class="col-2 ml-2 btn btn-primary" id="card-duplicate">複製</button>
+              <button class="col-2 ml-2 btn btn-danger" id="card-delete">削除</button>
+            </div>
+          </div>
+          <div class="col-3 mb-3">
+            <div class="card" id="card-image">
+              <img src=""/>
+            </div>
+          </div>
+          <div class="col-9 mb-3">
+            <div class="card">
+              <div class="card-body">
+                <div class="row">
+                  <label class="col-2" for="param-name">名前</label>
+                  <input class="col-6 form-control" id="param-name" key="name"/>
+                  <label class="col-2" for="param-package"><small>パッケージ</small></label>
+                  <select class="col-2 form-control" id="param-package" key="package" listkey="packages"></select>
+
+                  <label class="col-2" for="param-type">属性</label>
+                  <select class="col-2 form-control" id="param-type" key="type" listkey="types"></select>
+                  <label class="col-2" for="param-subtype">属性2</label>
+                  <select class="col-2 form-control" id="param-subtype" key="subtype" listkey="subtypes"></select>
+                  <label class="col-2" for="param-rarity"><small>レアリティ</small></label>
+                  <select class="col-2 form-control" id="param-rarity" key="rarity" listkey="rarities"></select>
+
+                  <label class="col-2" for="param-regulation">枚数制限</label>
+                  <select class="col-2 form-control" id="param-regulation" key="regulation">
+                    <option value="0">無し</option>
+                    <option value="1">1枚制限</option>
+                    <option value="2">2枚制限</option>
+                  </select>
+                  <label class="col-2" for="param-restriction">配置制限</label>
+                  <select class="col-3 form-control" id="param-restriction" key="restriction">
+                    <option value="1">前列のみ 配置可能</option>
+                    <option value="2">中列のみ 配置可能</option>
+                    <option value="4">後列のみ 配置可能</option>
+                    <option value="3">前/中列 配置可能</option>
+                    <option value="5">前/後列 配置可能</option>
+                    <option value="6">中/後列 配置可能</option>
+                    <option value="7">全列 配置可能</option>
+                  </select>
+                  <div class="col-3">
+                  </div>
+                  
+                  <label class="col-2" for="param-cost">コスト</label>
+                  <select class="col-2 form-control" id="param-cost" key="cost">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                  </select>
+                  <label class="col-2" for="param-sp">特技G</label>
+                  <select class="col-2 form-control" id="param-sp" key="sp" listkey="maxTurns"/>
+                  </select>
+                  <div class="col-4"></div>
+                  
+                  <label class="col-2" for="param-hp">HP</label>
+                  <input class="col-2 form-control" id="param-hp" key="hp"/>
+                  <label class="col-2" for="param-at">AT</label>
+                  <input class="col-2 form-control" id="param-at" key="at"/>
+                  <label class="col-2" for="param-ag">AG</label>
+                  <input class="col-2 form-control" id="param-ag" key="ag"/>
+                  
+                  <label class="col-2" for="param-ability1">能力1</label>
+                  <select class="col-2 form-control" id="param-ability1" key="ability1" listkey="abilities"/></select>
+                  <label class="col-2" for="param-ability2">能力2</label>
+                  <select class="col-2 form-control" id="param-ability2" key="ability2" listkey="abilities"/></select>
+                  <label class="col-2" for="param-ability3">能力3</label>
+                  <select class="col-2 form-control" id="param-ability3" key="ability3" listkey="abilities"/></select>
+                  
+
+                  <label class="col-2" for="param-metadata">Meta</label>
+                  <input class="form-control col-10" id="param-metadata" key="metadata"/>
+                  <label class="col-2" for="param-imgurl">画像</label>
+                  <input class="form-control col-10" id="param-imgurl" key="imgurl"/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row" id="skill-cards">
+        </div>
+      </div>
+    </div>
+<!-- Deck Editor -->
+    <div class="row nav-target" id="deck-editor">
+      <div class="col-xl-2 col-lg-3" id="sidebar">
+          Deck
+      </div>
+      <div class="col" id="main">
+      </div>
+    </div>
+<!-- test battle field -->
+    <div class="row nav-target" id="test-field">
+    </div>
+  </div>
+<!-- Action sequence card (will remove and clone) inline-->
+  <div class="col-12 mb-3 action-sequence-card">
+    <div class="card">
+      <div class="card-caption"></div>
+      <div class="card-body">
+        <button class="btn btn-primary btn-sm action-edit-button" type="button">編集</button>
+        <div class="range range1">
+          <div class="position-type"></div>
+          <div class="field field-p0 flex-wrap">
+            <span class="cell" cellid="6"></span>
+            <span class="cell" cellid="3"></span>
+            <span class="cell" cellid="0"></span>
+            <span class="cell" cellid="7"></span>
+            <span class="cell me" cellid="4"></span>
+            <span class="cell" cellid="1"></span>
+            <span class="cell" cellid="8"></span>
+            <span class="cell" cellid="5"></span>
+            <span class="cell" cellid="2"></span>
+          </div>
+          <div class="field field-p1 flex-wrap">
+            <span class="cell" cellid="9"></span>
+            <span class="cell" cellid="12"></span>
+            <span class="cell" cellid="15"></span>
+            <span class="cell" cellid="10"></span>
+            <span class="cell" cellid="13"></span>
+            <span class="cell" cellid="16"></span>
+            <span class="cell" cellid="11"></span>
+            <span class="cell" cellid="14"></span>
+            <span class="cell" cellid="17"></span>
+          </div>
+          <div class="range-caption float-left">(1)</div>
+          <div class="range-overlay"></div>
+        </div>
+        <div class="range range2 disabled">
+          <div class="position-type"></div>
+          <div class="field field-p0 flex-wrap">
+            <span class="cell" cellid="6"></span>
+            <span class="cell" cellid="3"></span>
+            <span class="cell" cellid="0"></span>
+            <span class="cell" cellid="7"></span>
+            <span class="cell me" cellid="4"></span>
+            <span class="cell" cellid="1"></span>
+            <span class="cell" cellid="8"></span>
+            <span class="cell" cellid="5"></span>
+            <span class="cell" cellid="2"></span>
+          </div>
+          <div class="field field-p1 flex-wrap">
+            <span class="cell" cellid="9"></span>
+            <span class="cell" cellid="12"></span>
+            <span class="cell" cellid="15"></span>
+            <span class="cell" cellid="10"></span>
+            <span class="cell" cellid="13"></span>
+            <span class="cell" cellid="16"></span>
+            <span class="cell" cellid="11"></span>
+            <span class="cell" cellid="14"></span>
+            <span class="cell" cellid="17"></span>
+          </div>
+          <div class="range-caption float-left">(2)</div>
+          <div class="range-overlay"></div>
+        </div>
+        <div class="card-text">
+          <span class="card-description"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+<!-- Action input popup -->
+  <div class="modal fade" id="action-input" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"></h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="container-fluid">
+            <div class="row mb-3" id="sequence-parameters">
+              <label class="col-2" for="param-skill-name">名前</label>
+              <input class="form-control col-6" id="param-skill-name" key="name" value=""/>
+              <div class="col-4">
+                <div class="row">
+                  <button class="col-6 btn btn-outline-dark" id="param-skill-copy">コピー</button>
+                  <button class="col-6 btn btn-outline-dark" id="param-skill-paste">貼り付け</button>
+                </div>
+              </div>
+              <div class="col-12" id="specialmove-action">
+                <div class="row">
+                  <label class="col-2" for="param-turn">範囲最小</label>
+                  <select class="col-2 form-control" id="param-turn" key="turnRangeMin" listkey="maxTurns">
+                  </select>
+                  <label class="col-2" for="param-turn">範囲最大</label>
+                  <select class="col-2 form-control" id="param-turn" key="turnRangeMax" listkey="maxTurns">
+                  </select>
+                  <label class="col-2" for="param-turn">継続</label>
+                  <select class="col-2 form-control" id="param-turn" key="turns" listkey="maxTurns">
+                  </select>
+                </div>
+              </div>
+              <div class="col-12" id="ability-action">
+               <div class="row">
+                 <label class="col-2" for="param-conditionType">発動条件</label>
+                 <select class="col-3 form-control" id="param-conditionType" key="conditionType">
+                   <option value="always">常時発動</option>
+                   <option value="typecount">デッキ属性数</option>
+                   <option value="cardcount">デッキカード枚数</option>
+                   <option value="types">単色デッキ属性</option>
+                 </select>
+                 <label class="col-2" for="param-conditionValue">条件値</label>
+                 <input class="col-1 form-control" id="param-conditionValue" key="conditionValue">
+                 <label class="col-2" for="param-trigger">タイミング</label>
+                 <select class="col-2 form-control" id="param-trigger" key="trigger">
+                   <option value="firstturn"   >戦闘開始時</option>
+                   <option value="5turnsevery" >第1,6,11,16ターン開始時</option>
+                   <option value="oddturns"    >奇数ターン開始時</option>
+                   <option value="eventurns"   >偶数ターン開始時</option>
+                   <option value="allturns"    >毎ターン開始時</option>
+                   <option value="allturnslast">毎ターン終了時</option>
+                 </select>
+               </div>
+             </div>
+           </div>
+            <div class="row mb-3">
+              <ul class="col-12 nav nav-tabs" id="action-navs">
+                <li class="nav-item" index="0">
+                  <a class="nav-link action-nav" href="#"></a>
+                </li>
+              </ul>
+            </div>
+            <div class="row mb-3" id="field" israngeabs="false" hassideatk="false">
+              <div class="col-5">
+                <div class="d-flex act-field row" id="act-field-p0">
+                  <button type="button" class="btn col-4 act-field-input cell" id="rangebit6"></button>
+                  <button type="button" class="btn col-4 act-field-input cell" id="rangebit3"></button>
+                  <button type="button" class="btn col-4 act-field-input cell" id="rangebit0"></button>
+                  <button type="button" class="btn col-4 act-field-input cell" id="rangebit7"></button>
+                  <button type="button" class="btn col-4 act-field-input cell me" id="rangebit4"></button>
+                  <button type="button" class="btn col-4 act-field-input cell" id="rangebit1"></button>
+                  <button type="button" class="btn col-4 act-field-input cell" id="rangebit8"></button>
+                  <button type="button" class="btn col-4 act-field-input cell" id="rangebit5"></button>
+                  <button type="button" class="btn col-4 act-field-input cell" id="rangebit2"></button>
+                  <button type="button" class="btn col-12 act-field-input set-all">Set All</button>
+                </div>
+              </div>
+              <div class="col-2">
+                <div class="d-flex justify-content-center flex-column align-content-stretch row" id="act-field-rel">
+                  <button type="button" class="btn btn-sm act-field-input sideattack">サイドアタック</button>
+                  <button type="button" class="btn act-field-input position pos-relative">相対</button>
+                  <button type="button" class="btn act-field-input position pos-absolute">絶対</button>
+                </div>
+                </div>
+              <div class="col-5">
+                <div class="d-flex act-field row" id="act-field-p1">
+                  <button type="button" class="btn col-4 act-field-input cell" id="rangebit9"></button>
+                  <button type="button" class="btn col-4 act-field-input cell" id="rangebit12"></button>
+                  <button type="button" class="btn col-4 act-field-input cell" id="rangebit15"></button>
+                  <button type="button" class="btn col-4 act-field-input cell" id="rangebit10"></button>
+                  <button type="button" class="btn col-4 act-field-input cell" id="rangebit13"></button>
+                  <button type="button" class="btn col-4 act-field-input cell" id="rangebit16"></button>
+                  <button type="button" class="btn col-4 act-field-input cell" id="rangebit11"></button>
+                  <button type="button" class="btn col-4 act-field-input cell" id="rangebit14"></button>
+                  <button type="button" class="btn col-4 act-field-input cell" id="rangebit17"></button>
+                  <button type="button" class="btn col-12 act-field-input set-all">Set All</button>
+                </div>
+              </div>
+            </div>
+            <div class="row" id="parameters">
+              <div class="col-12">
+                <div class="form-group row">
+                  <label class="col-2" for="param-type">アクション</label>
+                  <select class="form-control col-6" id="param-type" key="type">
+    <option value="none">(無し)</option>
+    <option value="attack">攻撃</option>
+    <option value="death">即死</option>
+    <option value="rebirth">復活</option>
+    <option value="sacrifice">犠牲</option>
+    <option value="swap">配置交換</option>
+    <option value="pushback">後方移動</option>
+    <option value="agup">AGアップ</option>
+    <option value="agdown">AGダウン</option>
+    <option value="atup">ATアップ</option>
+    <option value="atdown">ATダウン</option>
+    <option value="agatup">AG・ATアップ</option>
+    <option value="agatdown">AG・ATダウン</option>
+    <option value="hpup">HP回復</option>
+    <option value="hpupalt">最大値を超えてHP回復</option>
+    <option value="hpdown">HPダウン</option>
+    <option value="spup">特技ゲージ増加</option>
+    <option value="spdown">特技ゲージ減少</option>
+    <option value="probup">通常行動確率アップ</option>
+    <option value="probdown">通常行動確率ダウン</option>
+    <option value="spprobup">特技発動確率アップ</option>
+    <option value="spprobdown">特技発動確率ダウン</option>
+    <option value="critup">クリティカル率アップ</option>
+    <option value="critdown">クリティカル率ダウン</option>
+    <option value="stable">ステータス変化無効</option>
+    <option value="constant">ダメージ・回復・ステ変無効</option>
+    <option value="shield">シールド</option>
+    <option value="antidamage">ダメージ無効</option>
+    <option value="reflect">ダメージ反射</option>
+    <option value="damageup">ダメージ増加</option>
+    <option value="damagedown">ダメージ軽減</option>
+    <option value="undead">アンデッド</option>
+    <option value="poison">毒</option>
+    <option value="curse">呪い</option>
+    <option value="burst">バースト</option>
+    <option value="heal">HP継続回復</option>
+    <option value="healbar">ヒールバリア</option>
+    <option value="invertat">AT反転</option>
+    <option value="invertag">AG反転</option>
+    <option value="lock">行動不能</option>
+    <option value="confuse">混乱</option>
+    <option value="trance">トランス</option>
+    <option value="antiheal">回復無効</option>
+    <option value="antideath">即死無効</option>
+    <option value="antirebirth">復活無効</option>
+    <option value="avoidlethal">即死ダメージ回避</option>
+    <option value="synchro">シンクロ（未実装）</option>
+    <option value="setrebirth">再生</option>
+    <option value="typechange">属性変更</option>
+    <option value="targetchange">攻撃対象変更</option>
+    <option value="damagetrap">ダメージトラップ</option>
+    <option value="poisontrap">ポイズントラップ</option>
+    <option value="deathtrap">デストラップ（未実装）</option>
+    <option value="cancel_all">全効果打消し</option>
+    <option value="cancel_positive">プラス効果打消し</option>
+    <option value="cancel_negative">マイナス効果打消し</option>
+    <option value="cancel_lock">行動不能打消し</option>
+    <option value="cancel_atag">AT・AG変化打消し</option>
+    <option value="cancel_shield">シールド打消し</option>
+    <option value="cancel_barrier">ダメージバリア打消し</option>
+    <option value="cancel_antidamage">ダメージ無効打消し</option>
+    <option value="cancel_antirebirth">復活不能打消し</option>
+    <option value="cancel_antiheal">回復不能打消し</option> 
+    <option value="cancel_poison">毒打消し</option>
+    <option value="cancel_curse">呪い打消し</option>
+    <option value="cancel_burst">バースト打消し</option>
+    <option value="cancel_heal">継続回復打消し</option>
+    <option value="cancel_healbar">ヒールバリア打消し</option>
+    <option value="cancel_damageup">ダメージ増加打消し</option>
+    <option value="cancel_damagedown">ダメージ軽減打消し</option>
+    <option value="cancel_damagectrl">シールド・バリア・ダメ軽減打消し</option>
+    <option value="cancel_damagealt">シールド・反射・ダメ軽減・ダメ無効打消し</option>
+    <option value="cancel_undead">アンデッド打消し</option>
+    <option value="cancel_damagetrap">ダメージトラップ打消し</option>
+    <option value="cancel_poisontrap">ポイズントラップ打消し</option>
+    <option value="cancel_deathtrap">デストラップ打消し</option>
+    <option value="cancel_probdown">行動確率ダウン打消し</option>
+
+    <option value="agascendant">AG昇順化(未実装)</option>
+    <option value="create">クリエイト(未実装)</option>
+    <option value="repeat">リピート(未実装)</option>
+    <option value="imm_curse">呪い発動(未実装)</option>
+
+    <option value="cancel_aura">オーラ解除(未実装)</option>
+    <option value="fieldstatus">フィールドステータス(未実装)</option>
+    <option value="hpeven">HP平均化(未実装)</option>
+    <option value="hpevenalt">最大値を超えてHP平均化(未実装)</option>
+    <option value="familieract">ファミリア行動(未実装)</option>
+    <option value="penetrate">ダメージ貫通(未実装)</option>
+    <option value="energydrain">エナジードレイン(未実装)</option>
+                  </select>
+                  <label class="col-2" for="param-aula">オーラ</label>
+                  <select class="col-2 form-control" id="param-aula" key="aula">
+    <option value="0">無し</option>
+    <option value="1">オーラ</option>
+    <option value="2">オーラR</option>
+                  </select>
+                  <label class="col-2" for="param-prob">発動率</label>
+                  <select class="col-2 form-control" id="param-prob" key="prob">
+    <option value="0.05">5%</option>
+    <option value="0.1">10%</option>
+    <option value="0.15">15%</option>
+    <option value="0.2">20%</option>
+    <option value="0.25">25%</option>
+    <option value="0.3">30%</option>
+    <option value="0.35">35%</option>
+    <option value="0.4">40%</option>
+    <option value="0.45">45%</option>
+    <option value="0.5">50%</option>
+    <option value="0.55">55%</option>
+    <option value="0.6">60%</option>
+    <option value="0.65">65%</option>
+    <option value="0.7">70%</option>
+    <option value="0.75">75%</option>
+    <option value="0.8">80%</option>
+    <option value="0.85">85%</option>
+    <option value="0.9">90%</option>
+    <option value="0.95">95%</option>
+    <option value="1">100%</option>
+                  </select>
+                  <label class="col-2" for="param-turns">効果時間</label>
+                  <select class="col-2 form-control" id="param-turns" key="turns" listkey="maxTurns">
+                  </select>
+                  <label class="col-2" for="param-times">実行回数</label>
+                  <select class="col-2 form-control" id="param-times" key="times">
+    <option value="1">1回</option>
+    <option value="2">2回</option>
+    <option value="3">3回</option>
+    <option value="4">4回</option>
+    <option value="5">5回</option>
+    <option value="6">6回</option>
+    <option value="7">7回</option>
+    <option value="8">8回</option>
+    <option value="9">9回</option>
+    <option value="10">10回</option>
+                  </select>
+                  <label class="col-2" for="param-filterType">効果対象</label>
+                  <select class="form-control col-4" id="param-filterType" key="filterType">
+    <option value="all"    >全て(生死・空白を問わず)</option>
+    <option value="alive"  >生存</option>
+    <option value="dead"   >戦闘不能</option>
+    <option value="void"   >空地</option>
+    <option value="type"   >属性(閾値=bitflag)</option>
+    <option value="atgt"   >AT閾値以上</option>
+    <option value="atlt"   >AT閾値以下</option>
+    <option value="aggt"   >AG閾値以上</option>
+    <option value="aglt"   >AG閾値以下</option>
+    <option value="atrgt"  >AT倍率閾値以上</option>
+    <option value="atrlt"  >AT倍率閾値以下</option>
+    <option value="agrgt"  >AG倍率閾値以上</option>
+    <option value="agrlt"  >AG倍率閾値以下</option>
+    <option value="hpgt"   >HP閾値以上</option>
+    <option value="hplt"   >HP閾値以下</option>
+    <option value="spgt"   >SP閾値以上</option>
+    <option value="splt"   >SP閾値以下</option>
+    <option value="costgt" >コスト閾値以上</option>
+    <option value="costlt" >コスト閾値以下</option>
+    <option value="cardid" >カードID</option>
+    <option value="package">パッケージID</option>
+    <option value="rarity" >レアリティID</option>
+    <option value="poison" >毒効果</option>
+    <option value="curse"  >呪い効果</option>
+    <option value="burst"  >バースト効果</option>
+                  </select>
+                  <div class="col-6" id="filterfield">
+                    <div class="row" valuetype="none">
+                    </div>
+                    <div class="row" valuetype="value">
+                      <label class="col-4" for="param-filterValue">閾値</label>
+                      <input class="col-8 form-control" id="param-filterValue" key="filterValue" value="0"/>
+                    </div>
+                    <div class="row" valuetype="type">
+                    </div>
+                    <div class="row" valuetype="cardid">
+                      <label class="col-4" for="param-filterCardID">ID</label>
+                      <input class="col-8 form-control" id="param-filterCardID" linkto="param-filterValue"/>
+                    </div>
+                    <div class="row" valuetype="package">
+                      <label class="col-4" for="param-filterPackage">パッケージ</label>
+                      <select class="col-8 form-control" id="param-filterPackage" listkey="packages" linkto="param-filterValue"></select>
+                    </div>
+                    <div class="row" valuetype="rarity">
+                      <label class="col-4" for="param-filterRarity">レアリティ</label>
+                      <select class="col-8 form-control" id="param-filterRarity" listkey="rarities" linkto="param-filterValue"></select>
+                    </div>
+                  </div>
+                  <label class="col-2" for="param-count">対象人数</label>
+                  <select class="col-2 form-control" id="param-count" key="count">
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
+    <option value="5">5</option>
+    <option value="6">6</option>
+    <option value="7">7</option>
+    <option value="8">8</option>
+    <option value="9">9</option>
+    <option value="10">10</option>
+    <option value="11">11</option>
+    <option value="12">12</option>
+    <option value="13">13</option>
+    <option value="14">14</option>
+    <option value="15">15</option>
+    <option value="16">16</option>
+    <option value="17">17</option>
+    <option value="18">全て</option>
+                  </select>
+                  <label class="col-2" for="param-sortBy">順序</label>
+                  <select class="form-control col-4" id="param-sortBy" key="sortBy">
+    <option value="hp">HP</option>
+    <option value="at">AT</option>
+    <option value="ag">AG</option>
+    <option value="sp">SP</option>
+    <option value="cost">コスト</option>
+    <option value="dice">ランダム</option>
+                  </select>
+                  <select class="col-2 form-control" id="param-orderBy" key="orderBy">
+    <option value="-1">降順</option>
+    <option value="1">昇順</option>
+                  </select>
+                  <label class="col-2" for="param-valBase">効果値</label>
+                  <select class="form-control col-4" id="param-valBase" key="valBase">
+    <option value="zero">(固有値)</option>
+    <option value="at">AT</option>
+    <option value="hp">HP</option>
+    <option value="alive">生存数(全体)</option>
+    <option value="player_alive">生存数(自陣)</option>
+    <option value="opponent_alive">生存数(敵陣)</option>
+    <option value="dead">戦闘不能数(全体)</option>
+    <option value="player_dead">戦闘不能数(自陣)</option>
+    <option value="opponent_dead">戦闘不能数(敵陣)</option>
+                  </select>
+                  <label class="col-1" for="param-valRatio">×</label>
+                  <select class="col-2 form-control" id="param-valRatio" key="valRatio">
+    <option value="0">0</option>
+    <option value="0.05">0.05</option>
+    <option value="0.1">0.1</option>
+    <option value="0.15">0.15</option>
+    <option value="0.2">0.2</option>
+    <option value="0.25">0.25</option>
+    <option value="0.3">0.3</option>
+    <option value="0.35">0.35</option>
+    <option value="0.4">0.4</option>
+    <option value="0.45">0.45</option>
+    <option value="0.5">0.5</option>
+    <option value="0.55">0.55</option>
+    <option value="0.6">0.6</option>
+    <option value="0.65">0.65</option>
+    <option value="0.7">0.7</option>
+    <option value="0.75">0.75</option>
+    <option value="0.8">0.8</option>
+    <option value="0.85">0.85</option>
+    <option value="0.9">0.9</option>
+    <option value="0.95">0.95</option>
+    <option value="1">1</option>
+    <option value="1.05">1.05</option>
+    <option value="1.1">1.1</option>
+    <option value="1.15">1.15</option>
+    <option value="1.2">1.2</option>
+    <option value="1.25">1.25</option>
+    <option value="1.3">1.3</option>
+    <option value="1.4">1.4</option>
+    <option value="1.5">1.5</option>
+    <option value="1.75">1.75</option>
+    <option value="2">2</option>
+    <option value="2.5">2.5</option>
+    <option value="5">5</option>
+    <option value="10">10</option>
+    <option value="15">15</option>
+    <option value="20">20</option>
+    <option value="25">25</option>
+    <option value="30">30</option>
+                  </select>
+                  <label class="col-1" for="param-valConst">＋</label>
+                  <input class="col-2 form-control" id="param-valConst" key="valConst" value="0"/>
+                  <select class="col-2 form-control" id="param-valConst-typeID" value="0"/>
+                  </select>
+                <label class="col-3" for="param-crit1prob">クリティカル1　確率</label>
+                  <select class="col-2 form-control" id="param-crit1prob" key="crit1prob">
+    <option value="0">0%</option>
+    <option value="0.05">5%</option>
+    <option value="0.1">10%</option>
+    <option value="0.15">15%</option>
+    <option value="0.2">20%</option>
+    <option value="0.25">25%</option>
+    <option value="0.3">30%</option>
+    <option value="0.35">35%</option>
+    <option value="0.4">40%</option>
+    <option value="0.45">45%</option>
+    <option value="0.5">50%</option>
+    <option value="0.55">55%</option>
+    <option value="0.6">60%</option>
+    <option value="0.65">65%</option>
+    <option value="0.7">70%</option>
+    <option value="0.75">75%</option>
+    <option value="0.8">80%</option>
+    <option value="0.85">85%</option>
+    <option value="0.9">90%</option>
+    <option value="0.95">95%</option>
+    <option value="1">100%</option>
+                  </select>
+                  <label class="col-2" for="param-crit1ratio">効果係数倍率</label>
+                  <select class="col-2 form-control" id="param-crit1ratio" key="crit1ratio">
+    <option value="1.2">x1.2</option>
+    <option value="1.25">x1.25</option>
+    <option value="1.5">x1.5</option>
+    <option value="1.6">x1.6</option>
+    <option value="1.75">x1.75</option>
+    <option value="2">x2.0</option>
+    <option value="2.25">x2.25</option>
+    <option value="2.5">x2.5</option>
+                  </select>
+                  <label class="col-3"></label>
+                  <label class="col-3" for="param-va2prob">クリティカル2　確率</label>
+                  <select class="col-2 form-control" id="param-crit2prob" key="crit2prob">
+    <option value="0">0%</option>
+    <option value="0.05">5%</option>
+    <option value="0.1">10%</option>
+    <option value="0.15">15%</option>
+    <option value="0.2">20%</option>
+    <option value="0.25">25%</option>
+    <option value="0.3">30%</option>
+    <option value="0.35">35%</option>
+    <option value="0.4">40%</option>
+    <option value="0.45">45%</option>
+    <option value="0.5">50%</option>
+    <option value="0.55">55%</option>
+    <option value="0.6">60%</option>
+    <option value="0.65">65%</option>
+    <option value="0.7">70%</option>
+    <option value="0.75">75%</option>
+    <option value="0.8">80%</option>
+    <option value="0.85">85%</option>
+    <option value="0.9">90%</option>
+    <option value="0.95">95%</option>
+    <option value="1">100%</option>
+                  </select>
+                  <label class="col-2" for="param-crit2ratio">効果係数倍率</label>
+                  <select class="col-2 form-control" id="param-crit2ratio" key="crit2ratio">
+    <option value="1.2">x1.2</option>
+    <option value="1.25">x1.25</option>
+    <option value="1.5">x1.5</option>
+    <option value="1.6">x1.6</option>
+    <option value="1.75">x1.75</option>
+    <option value="2">x2.0</option>
+    <option value="2.25">x2.25</option>
+    <option value="2.5">x2.5</option>
+                  </select>
+                  <label class="col-3"></label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger mr-auto" id="delete">削除</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+          <button type="button" class="btn btn-primary" id="submit">更新</button>
+        </div>
+      </div>
+    </div>
+  </div>
+<!-- Comfirmation popup -->
+  <div class="modal fade" id="confirmation" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"></h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="message"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancel" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="ok">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+

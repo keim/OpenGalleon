@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cindellera relations</title>
+  <style> body{margin:0} canvas{width:100%;height:100%}</style>  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/85/three.min.js"></script>
+  <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+
+  <script src="./opengalleon/card.js"></script>
+  <script src="./opengalleon/field.js"></script>
+  <script src="./opengalleon/fieldcell.js"></script>
+  <script src="./opengalleon/cardinfo.js"></script>
+
+  <script src="./opengalleon/logexecutor.js"></script>
+  <script>
+var field = new Field();
+
+$(()=>{
+  field.clear();
+  console.log(db[0]);
+  let c = new Card(db[0]);
+  field.setCard(c, 0, 0);
+  field.setCard(c, 1, 1);
+  let logs = field.startBattle();
+  console.log(logs);
+});
+
+  </script>
+</head>
+<body>
+    
+</body>
+</html>
