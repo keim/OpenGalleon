@@ -1,3 +1,3 @@
 # OpenGalleon
-source code for "Sky Galleon" like card game written in JavaScript.
-
+Open source project for "Sky Galleon" like card game written in JavaScript.
+[Editor](https://keim.github.io/OpenGalleon/editor/)
